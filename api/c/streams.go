@@ -2,6 +2,7 @@ package api
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,9 +18,10 @@ import (
 // @Accept      x-www-form-urlencoded
 // @Produce     json
 // @Param       id     path     string true  "通道id"
-// @Param       replay formData int    false "是否回放，1回放，0直播，默认0"
+// @Param       replay formData int    false "是否回放，1回放，0直播，默认0，2下载"
 // @Param       start  formData int    false "回放开始时间，时间戳，replay=1时必传"
 // @Param       end    formData int    false "回放结束时间，时间戳，replay=1时必传"
+// @Param       tcp    formData string false "是否是tcp"
 // @Success     0      {object} sipapi.Streams
 // @Failure     1000 {object} string
 // @Failure     1001 {object} string
@@ -27,11 +29,24 @@ import (
 // @Failure     1003 {object} string
 // @Router      /channels/{id}/streams [post]
 func Play(c *gin.Context) {
+	isTCP := true
+	tcp := c.PostForm("tcp")
+	if tcp == "0" {
+		isTCP = false
+	}
+
 	channelid := c.Param("id")
 	pm := &sipapi.Streams{S: time.Time{}, E: time.Time{}, ChannelID: channelid, Ttag: db.M{}, Ftag: db.M{}}
-	if c.PostForm("replay") == "1" {
-		// 回放，获取时间
-		pm.T = 1
+	replayType := c.PostForm("replay")
+
+	if replayType == "1" || replayType == "2" {
+		if replayType == "1" {
+			// 回放，获取时间
+			pm.T = 1
+		} else if replayType == "2" {
+			// 下载
+			pm.T = 2
+		}
 		s, _ := strconv.ParseInt(c.PostForm("start"), 10, 64)
 		if s == 0 {
 			m.JsonResponse(c, m.StatusParamsERR, "开始时间错误")
@@ -51,11 +66,57 @@ func Play(c *gin.Context) {
 			return
 		}
 	}
-	res, err := sipapi.SipPlay(pm)
+	res, err := sipapi.SipPlay(pm, isTCP)
 	if err != nil {
 		m.JsonResponse(c, m.StatusParamsERR, err.Error())
 		return
 	}
+	m.JsonResponse(c, m.StatusSucc, res)
+}
+
+// @Summary     多设备播放（直播/回放）
+// @Description 直播一个通道最多存在一个流，回放每请求一次生成一个流
+// @Tags        streams
+// @Accept      x-www-form-urlencoded
+// @Produce     json
+// @Param       ids    path     string true  "通道id1,id2,id3"
+// @Param       tcp    formData string false "是否是tcp"
+// @Success     0      {object} sipapi.Streams
+// @Failure     1000 {object} string
+// @Failure     1001 {object} string
+// @Failure     1002 {object} string
+// @Failure     1003 {object} string
+// @Router      /channels/{id}/streams [post]
+func MultiPlay(c *gin.Context) {
+	channelIDs := c.Param("ids")
+
+	isTCP := true
+	tcp := c.Query("tcp")
+	if tcp == "0" {
+		isTCP = false
+	}
+
+	ids := strings.Split(channelIDs, ",")
+	var res []*sipapi.Streams
+
+	for i := range ids {
+		// 直播 判断当前通道是否存在流了。
+		if v, ok := sipapi.StreamList.Succ.Load(ids[i]); ok {
+			params := v.(*sipapi.Streams)
+			res = append(res, params)
+			continue
+		} else {
+			pm := &sipapi.Streams{S: time.Time{}, E: time.Time{}, ChannelID: ids[i], Ttag: db.M{}, Ftag: db.M{}}
+			v, err := sipapi.SipPlay(pm, isTCP)
+			if err != nil {
+				logrus.Error("sip play %s", err)
+				continue
+			}
+
+			res = append(res, v)
+		}
+	}
+
 	m.JsonResponse(c, m.StatusSucc, res)
 }
 

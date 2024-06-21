@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/panjjo/gorm"
@@ -185,51 +186,68 @@ func DevicesDelete(c *gin.Context) {
 	m.JsonResponse(c, m.StatusSucc, "")
 }
 
-// // 视频流录制 默认保存为mp4文件，录制最多录制10分钟，10分钟后自动停止，一个流只能存在一个录制
-// func apiRecordStart(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-// 	id := ps.ByName("id")
-// 	if _, ok := _playList.ssrcResponse.Load(id); !ok {
-// 		_apiResponse(w, statusParamsERR, "视频流不存在")
-// 		return
-// 	}
-// 	if _, ok := _apiRecordList.Get(id); ok {
-// 		_apiResponse(w, statusParamsERR, "视频流存在未完成录制")
-// 		return
-// 	}
-// 	values := url.Values{}
-// 	values.Set("secret", config.Media.Secret)
-// 	values.Set("type", "1")
-// 	values.Set("vhost", "__defaultVhost__")
-// 	values.Set("app", "rtp")
-// 	values.Set("stream", id)
-// 	req := r.URL.Query()
-// 	item := _apiRecordList.Start(id, values)
-// 	item.req = req
-// 	code, data := item.start()
-// 	if code != statusSucc {
-// 		_apiRecordList.Stop(id)
-// 		data = fmt.Sprintf("录制失败:%v", data)
-// 	}
-// 	_apiResponse(w, code, data)
-// }
+// 视频流录制 默认保存为mp4文件，录制最多录制10分钟，10分钟后自动停止，一个流只能存在一个录制
+func RecordStart(c *gin.Context) {
+	streamID := c.Param("id")
 
-// // 停止录制，传入录制时返回的data字段
-// func apiRecordStop(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-// 	id := ps.ByName("id")
+	if _, ok := sipapi.StreamList.Response.Load(streamID); !ok {
+		m.JsonResponse(c, m.StatusParamsERR, "视频流不存在或已关闭")
+		return
+	}
 
-// 	if item, ok := _apiRecordList.Get(id); !ok {
-// 		_apiResponse(w, statusParamsERR, "录制不存在或已结束")
-// 	} else {
-// 		code, data := item.stop()
-// 		if code == statusSucc {
-// 			item.clos <- true
-// 		} else {
-// 			data = fmt.Sprintf("停止录制失败:%v", data)
-// 		}
-// 		url := <-item.resp
-// 		_apiResponse(w, code, url)
-// 	}
-// }
+	if _, ok := sipapi.RecordList.Get(streamID); ok {
+		//sipapi.RecordList.Stop(req.Stream)
+		//item.Down(req.URL)
+		//item.Resp(fmt.Sprintf("%s/%s", m.MConfig.Media.HTTP, req.URL))
+
+		m.JsonResponse(c, m.StatusDBERR, fmt.Errorf("视频流存在未完成录制"))
+		return
+	}
+
+	//if _, ok := _playList.ssrcResponse.Load(id); !ok {
+	//	_apiResponse(w, statusParamsERR, "视频流不存在")
+	//	return
+	//}
+	//if _, ok := _apiRecordList.Get(id); ok {
+	//	_apiResponse(w, statusParamsERR, "视频流存在未完成录制")
+	//	return
+	//}
+
+	values := url.Values{}
+	values.Set("secret", m.MConfig.Media.Secret)
+	values.Set("type", "1")
+	values.Set("vhost", "__defaultVhost__")
+	values.Set("app", "rtp")
+	values.Set("stream", streamID)
+	//req := r.URL.Query()
+	item := sipapi.RecordList.Start(streamID, values)
+	code, data := item.Start()
+	if code != m.StatusSucc {
+		sipapi.RecordList.Stop(streamID)
+		data = fmt.Sprintf("录制失败:%v", data)
+	}
+
+	m.JsonResponse(c, m.StatusSucc, data)
+}
+
+// 停止录制，传入录制时返回的data字段
+func RecordStop(c *gin.Context) {
+	id := c.Param("id")
+
+	if item, ok := sipapi.RecordList.Get(id); !ok {
+		m.JsonResponse(c, m.StatusParamsERR, fmt.Errorf("录制不存在或已结束"))
+	} else {
+		code, data := item.Stop()
+		if code == m.StatusSucc {
+			item.Clos <- true
+		} else {
+			data = fmt.Sprintf("停止录制失败:%v", data)
+		}
+		resURL := <-item.GetResp()
+
+		m.JsonResponse(c, m.StatusSucc, resURL)
+	}
+}
 
 // // 拉流代理，用来转换非GB28281的播放源,代理只支持直播
 // func apiAddProxy(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

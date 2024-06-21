@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/panjjo/gosip/db"
@@ -248,6 +249,40 @@ func sipMessageDeviceInfo(u Devices, body []byte) error {
 	return nil
 }
 
+func GetActiveDevice(deviceID string) *Devices {
+	device, ok := _activeDevices.Get(deviceID)
+	if !ok {
+		return nil
+	}
+	return &device
+}
+
+func DevicePTZ(to Devices, cmd string) error {
+	to.addr.URI.SetHost(to.Host)
+	iport, _ := strconv.Atoi(to.Port)
+	to.addr.URI.FPort = sip.NewPort(iport)
+	logrus.Infoln("to addr URI:", to.addr.URI.String())
+	logrus.Infoln("from addr URI:", _serverDevices.addr.URI.String())
+
+	hb := sip.NewHeaderBuilder().SetTo(to.addr).SetFrom(_serverDevices.addr).AddVia(&sip.ViaHop{
+		Params: sip.NewParams().Add("branch", sip.String{Str: sip.GenerateBranch()}),
+	}).SetContentType(&sip.ContentTypeXML).SetMethod(sip.MESSAGE)
+
+	req := sip.NewRequest("", sip.MESSAGE, to.addr.URI, sip.DefaultSipVersion, hb.Build(), sip.GetDevicePTZXML(to.DeviceID, cmd))
+	req.SetDestination(to.source)
+	tx, err := srv.Request(req)
+	if err != nil {
+		logrus.Warnln("sipDevicePTZ  error,", err)
+		return err
+	}
+	_, err = sipResponse(tx)
+	if err != nil {
+		logrus.Warnln("sipDevicePTZ  response error,", err)
+		return err
+	}
+	return nil
+}
+
 // MessageDeviceListResponse 设备明细列表返回结构
 type MessageDeviceListResponse struct {
 	XMLName  xml.Name   `xml:"Response"`
@@ -285,7 +320,9 @@ func sipMessageCatalog(u Devices, body []byte) error {
 				db.Save(db.DBClient, &channel)
 				go notify(notifyChannelsActive(channel))
 			} else {
-				logrus.Infoln("deviceid not found,deviceid:", d.DeviceID, "pdid:", message.DeviceID, "err", err)
+				channel.StreamType = m.StreamTypePush
+				db.Save(db.DBClient, &channel)
+				//logrus.Infoln("deviceid not found,deviceid:", d.DeviceID, "pdid:", message.DeviceID, "err", err)
 			}
 		}
 	}

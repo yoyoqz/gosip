@@ -204,8 +204,12 @@ func zlmStreamNotFound(c *gin.Context) {
 				logrus.Infoln("closeStream stream pushed!", req.Stream)
 			} else {
 				// 拉流的，重新拉流
-				sipapi.SipPlay(params)
-				logrus.Infoln("closeStream stream pulled!", req.Stream)
+				_, err := sipapi.SipPlay(params, false)
+				if err != nil {
+					logrus.Errorf("zlmStreamNotFound, SipPlay err=%s \n", err.Error())
+				} else {
+					logrus.Infoln("closeStream stream pulled!", req.Stream)
+				}
 			}
 		} else {
 			if time.Now().Unix() > params.Ext {

@@ -15,7 +15,7 @@ import (
 )
 
 // sip 请求播放
-func SipPlay(data *Streams) (*Streams, error) {
+func SipPlay(data *Streams, isTCP bool) (*Streams, error) {
 
 	channel := Channels{ChannelID: data.ChannelID}
 	if err := db.Get(db.DBClient, &channel); err != nil {
@@ -44,16 +44,21 @@ func SipPlay(data *Streams) (*Streams, error) {
 		// GB28181推流
 		if data.StreamID == "" {
 			ssrcLock.Lock()
-			data.ssrc = getSSRC(data.T)
+			if data.T == 2 {
+				data.ssrc = getSSRC(1)
+			} else {
+				data.ssrc = getSSRC(data.T)
+			}
+
 			data.StreamID = ssrc2stream(data.ssrc)
 
 			// 成功后保存
-			db.Create(db.DBClient, data)
+			//db.Create(db.DBClient, data)
 			ssrcLock.Unlock()
 		}
 
 		var err error
-		data, err = sipPlayPush(data, channel, user)
+		data, err = sipPlayPush(data, channel, user, isTCP)
 		if err != nil {
 			return nil, fmt.Errorf("获取视频失败:%v", err)
 		}
@@ -75,16 +80,21 @@ func SipPlay(data *Streams) (*Streams, error) {
 
 var ssrcLock *sync.Mutex
 
-func sipPlayPush(data *Streams, channel Channels, device Devices) (*Streams, error) {
+func sipPlayPush(data *Streams, channel Channels, device Devices, isTCP bool) (*Streams, error) {
 	var (
 		s sdp.Session
 		b []byte
 	)
 	name := "Play"
-	protocal := "TCP/RTP/AVP"
+	protocal := "RTP/AVP"
+	if isTCP {
+		protocal = "TCP/RTP/AVP"
+	}
+
 	if data.T == 1 {
 		name = "Playback"
-		protocal = "RTP/RTCP"
+	} else if data.T == 2 {
+		name = "Download"
 	}
 
 	video := sdp.Media{
@@ -103,6 +113,9 @@ func sipPlayPush(data *Streams, channel Channels, device Devices) (*Streams, err
 	video.AddAttribute("rtpmap", "96", "PS/90000")
 	video.AddAttribute("rtpmap", "98", "H264/90000")
 	video.AddAttribute("rtpmap", "97", "MPEG4/90000")
+	if data.T == 2 {
+		video.AddAttribute("downloadspeed", "8")
+	}
 
 	// defining message
 	msg := &sdp.Message{
@@ -124,7 +137,7 @@ func sipPlayPush(data *Streams, channel Channels, device Devices) (*Streams, err
 		Medias: []sdp.Media{video},
 		SSRC:   data.ssrc,
 	}
-	if data.T == 1 {
+	if data.T == 1 || data.T == 2 {
 		msg.URI = fmt.Sprintf("%s:0", channel.ChannelID)
 	}
 

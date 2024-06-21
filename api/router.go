@@ -30,11 +30,21 @@ func Init(r *gin.Engine) {
 	{
 		r.GET("/streams", api.StreamsList)
 		r.POST("/channels/:id/streams", api.Play)
+		r.POST("/channels/streams/more/:ids", api.MultiPlay)
 		r.DELETE("/streams/:id", api.Stop)
 	}
 	// 录像类
 	{
 		r.GET("/channels/:id/records", api.RecordsList)
+	}
+	// 录制
+	{
+		r.GET("/play/:id/record", api.RecordStart) // 录制
+		r.GET("/record/:id/stop", api.RecordStop)  // 停止录制
+	}
+	// PTZ 控制
+	{
+		r.POST("/devices/:id/ptz", api.PTZCtrl)
 	}
 	// zlm webhook
 	{

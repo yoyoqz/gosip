@@ -54,6 +54,9 @@ func UpdateAll(db *gorm.DB, model any, query map[string]any, update any) (int64,
 func Get(db *gorm.DB, obj any) error {
 	return db.Where(obj).First(obj).Error
 }
+func Exit(db *gorm.DB, key string, value string, obj any) error {
+	return db.Where(key+ " = ?", value).First(obj).Error
+}
 func GetQ(db *gorm.DB, obj any, query map[string]any, ors ...[]map[string]any) error {
 	t := GenQueryDB(db, query, ors...)
 	return t.First(obj).Error

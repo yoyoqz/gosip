@@ -20,7 +20,7 @@ type Streams struct {
 	DeviceID string `json:"deviceid" gorm:"column:deviceid"`
 	// 通道ID
 	ChannelID string `json:"channelid" gorm:"column:channelid"`
-	//  pull 媒体服务器主动拉流，push 监控设备主动推流
+	//  pull 媒体服务器主动拉流，push 监控设备主动推流fmp4
 	StreamType string `json:"streamtype" gorm:"column:streamtype"`
 	// 0正常 1关闭 -1 尚未开始
 	Status int `json:"status" gorm:"column:status"`

@@ -26,7 +26,7 @@ func (rl *apiRecordList) Get(id string) (*apiRecordItem, bool) {
 }
 
 func (rl *apiRecordList) Start(id string, values url.Values) *apiRecordItem {
-	item := &apiRecordItem{resp: make(chan string, 1), clos: make(chan bool, 1), params: values, id: utils.RandString(32)}
+	item := &apiRecordItem{resp: make(chan string, 1), Clos: make(chan bool, 1), params: values, id: utils.RandString(32)}
 	rl.l.Lock()
 	rl.items[id] = item
 	rl.l.Unlock()
@@ -44,7 +44,7 @@ var RecordList apiRecordList
 
 type apiRecordItem struct {
 	resp   chan string
-	clos   chan bool
+	Clos   chan bool
 	params url.Values
 	req    url.Values
 	id     string
@@ -67,9 +67,9 @@ func (ri *apiRecordItem) Start() (string, interface{}) {
 		case <-tick.C:
 			// 自动停止录制
 			ri.Stop()
-			url := <-ri.resp
-			notify(notifyRecordStop(url, ri.req))
-		case <-ri.clos:
+			url1 := <-ri.resp
+			notify(notifyRecordStop(url1, ri.req))
+		case <-ri.Clos:
 			// 调用stop接口
 		}
 	}()
@@ -93,12 +93,21 @@ func (ri *apiRecordItem) Stop() (string, interface{}) {
 	return m.StatusSucc, ""
 }
 
-func (ri *apiRecordItem) Down(url string) {
-	db.UpdateAll(db.DBClient, new(Files), db.M{"id=?": ri.id}, db.M{"end": time.Now().Unix(), "status": 1, "file": url})
+func (ri *apiRecordItem) Down(url string) error {
+	_, err := db.UpdateAll(db.DBClient, new(Files), db.M{"id=?": ri.id}, db.M{"end": time.Now().Unix(), "status": 1, "file": url})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (ri *apiRecordItem) Resp(data string) {
 	ri.resp <- data
+}
+
+func (ri *apiRecordItem) GetResp() <-chan string {
+	return ri.resp
 }
 
 // Files Files
