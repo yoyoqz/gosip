@@ -4,30 +4,19 @@ sipserver,GB28181,ZLMediaKit
 # gosip
 和 [ZLMediaKit](https://github.com/xia-chu/ZLMediaKit) 一起使用，zlm配置文件中的webhook请配置为此项目的restfulapi地址，否则部分功能无法使用。
 zlm免编译docker镜像 [zlm docker image](https://hub.docker.com/repository/docker/panjjo/zlmediakit)
-交流方式：请加QQ群-542509000，@bzfj，或着加Q：35929310
+交流方式：加QQ：376762789
 
----
+
+
 ## 2.0 改动说明
-- 数据存储从mongo改为mysql，毕竟sql数据库用的人多，nosql比较少
-- 重新整理了api接口，生成了swagger文档，可以直接在线调试
-- go版本升级到1.19
+
+- multi play 接口，一次返回多个直播地址，方便网页端展示多个设备
+- 点播udp支持
+- 从nvr下载支持
 
 
 ---
-## 快速开始
-1. 运行zlmedia 具体运行方式请参考[ZLMediaKit](https://github.com/xia-chu/ZLMediaKit)
-2. 启动mysql 并创建DB
-3. 修改demo下的配置文件（数据库地址和zlm地址,本地端口等）
-4. 启动gosip ，启动后gosip会自动创建数据库表。浏览器访问http://localhost:8090/swagger/index.html 可查看在线API文档
-5. 通过设备注册接口（POST /devices) 新注册一个设备，获取到设备sipid和服务器sipid，服务器域等信息，
-6. 通过通道注册接口（POST /devices/:id/channels)新增通道设备
-7. 将5，6步生成的数据填充到录像机GB28181配置页面，并保存
-8. 查看设备和通道是否活跃并在线
-9. 通道在线后访问播放接口（POST /channels/:id/streams）获取直播流
-10. 根据返回的播放地址进行播放
-11. 调用关闭流接口（DELETE /streams/:id) 关闭流
-
-### 视频教程
+### 
 [![asciicast](./demo/api.png)](https://down-yss.oss-cn-hangzhou.aliyuncs.com/v.m4v)
 
 ---
