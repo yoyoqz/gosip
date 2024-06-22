@@ -3,6 +3,9 @@ package sipapi
 import (
 	"errors"
 	"fmt"
+	"net"
+	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -24,6 +27,9 @@ func SipPlay(data *Streams, isTCP bool) (*Streams, error) {
 		}
 		return nil, err
 	}
+
+	//add multi play
+	s := GetStrategy(config.Strategy).GetNext()
 
 	data.DeviceID = channel.DeviceID
 	data.StreamType = channel.StreamType
@@ -58,16 +64,18 @@ func SipPlay(data *Streams, isTCP bool) (*Streams, error) {
 		}
 
 		var err error
-		data, err = sipPlayPush(data, channel, user, isTCP)
+		data, err = sipPlayPush(data, channel, user, isTCP, s.RTP)
 		if err != nil {
 			return nil, fmt.Errorf("获取视频失败:%v", err)
 		}
 	}
 
-	data.HTTP = fmt.Sprintf("%s/rtp/%s/hls.m3u8", config.Media.HTTP, data.StreamID)
-	data.RTMP = fmt.Sprintf("%s/rtp/%s", config.Media.RTMP, data.StreamID)
-	data.RTSP = fmt.Sprintf("%s/rtp/%s", config.Media.RTSP, data.StreamID)
-	data.WSFLV = fmt.Sprintf("%s/rtp/%s.live.flv", config.Media.WS, data.StreamID)
+	data.HTTP = fmt.Sprintf("%s/rtp/%s/hls.m3u8", s.RESTFUL, data.StreamID)
+	data.RTMP = fmt.Sprintf("%s/rtp/%s", s.RTMP, data.StreamID)
+	data.RTSP = fmt.Sprintf("%s/rtp/%s", s.RESTFUL, data.StreamID)
+	data.WSFLV = fmt.Sprintf("%s/rtp/%s.live.flv", s.WS, data.StreamID)
+	data.Secret = s.Secret
+	data.RESTFUL = s.RESTFUL
 
 	data.Ext = time.Now().Unix() + 2*60 // 2分钟等待时间
 	StreamList.Response.Store(data.StreamID, data)
@@ -80,11 +88,25 @@ func SipPlay(data *Streams, isTCP bool) (*Streams, error) {
 
 var ssrcLock *sync.Mutex
 
-func sipPlayPush(data *Streams, channel Channels, device Devices, isTCP bool) (*Streams, error) {
+func sipPlayPush(data *Streams, channel Channels, device Devices, isTCP bool, rtpInfo string) (*Streams, error) {
 	var (
 		s sdp.Session
 		b []byte
 	)
+
+	url, err := url.Parse(rtpInfo)
+	if err != nil {
+		logrus.Fatalf("media rtp url error,url:%s,err:%v", rtpInfo, err)
+	}
+	ipaddr, err := net.ResolveIPAddr("ip", url.Hostname())
+	if err != nil {
+		logrus.Fatalf("media rtp url error,url:%s,err:%v", rtpInfo, err)
+	}
+	port, err := strconv.Atoi(url.Port())
+	if err != nil {
+		logrus.Fatalf("media rtp url error,url:%s,err:%v", rtpInfo, err)
+	}
+
 	name := "Play"
 	protocal := "RTP/AVP"
 	if isTCP {
@@ -100,7 +122,7 @@ func sipPlayPush(data *Streams, channel Channels, device Devices, isTCP bool) (*
 	video := sdp.Media{
 		Description: sdp.MediaDescription{
 			Type:     "video",
-			Port:     _sysinfo.MediaServerRtpPort,
+			Port:     port,
 			Formats:  []string{"96", "98", "97"},
 			Protocol: protocal,
 		},
@@ -121,11 +143,11 @@ func sipPlayPush(data *Streams, channel Channels, device Devices, isTCP bool) (*
 	msg := &sdp.Message{
 		Origin: sdp.Origin{
 			Username: _serverDevices.DeviceID, // 媒体服务器id
-			Address:  _sysinfo.MediaServerRtpIP.String(),
+			Address:  ipaddr.IP.String(),
 		},
 		Name: name,
 		Connection: sdp.ConnectionData{
-			IP:  _sysinfo.MediaServerRtpIP,
+			IP:  ipaddr.IP,
 			TTL: 0,
 		},
 		Timing: []sdp.Timing{

@@ -1,7 +1,6 @@
 package m
 
 import (
-	"net"
 	"strings"
 	"time"
 
@@ -18,7 +17,8 @@ type Config struct {
 	UDP       string            `json:"udp" yaml:"udp" mapstructure:"udp"`
 	API       string            `json:"api" yaml:"api" mapstructure:"api"`
 	Secret    string            `json:"secret" yaml:"secret" mapstructure:"secret"`
-	Media     MediaServer       `json:"media" yaml:"media" mapstructure:"media"`
+	Strategy  string            `json:"strategy" yaml:"strategy" mapstructure:"strategy"`
+	Media     []MediaServer     `json:"media" yaml:"media" mapstructure:"media"`
 	Stream    Stream            `json:"stream" yaml:"stream" mapstructure:"stream"`
 	Record    RecordCfg         `json:"record" yaml:"record" mapstructure:"record"`
 	GB28181   *SysInfo          `json:"gb28181" yaml:"gb28181" mapstructure:"gb28181"`
@@ -47,6 +47,7 @@ type MediaServer struct {
 	RTSP    string `json:"rtsp" yaml:"rtsp" mapstructure:"rtsp"`
 	RTP     string `json:"rtp" yaml:"rtp" mapstructure:"rtp"`
 	Secret  string `json:"secret" yaml:"secret" mapstructure:"secret"`
+	Weight  int    `json:"weight" yaml:"weight" mapstructure:"weight"`
 }
 
 type SysInfo struct {
@@ -64,10 +65,6 @@ type SysInfo struct {
 	// LID 当前服务id
 	LID         string `json:"lid" bson:"lid" yaml:"lid" mapstructure:"lid"`
 	MediaServer bool
-	// 媒体服务器接流地址
-	MediaServerRtpIP net.IP `gorm:"-" json:"-"`
-	// 媒体服务器接流端口
-	MediaServerRtpPort int `gorm:"-"  json:"-"`
 }
 
 func DefaultInfo() *SysInfo {

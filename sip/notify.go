@@ -71,15 +71,22 @@ func notifyChannelsActive(d Channels) *Notify {
 		},
 	}
 }
-func notifyRecordStop(url string, req url.Values) *Notify {
-	d := map[string]interface{}{
-		"url": fmt.Sprintf("%s/%s", config.Media.HTTP, url),
+
+func notifyRecordStop(id string, url string, req url.Values) *Notify {
+	if v, ok := StreamList.Response.Load(id); ok {
+		params := v.(*Streams)
+
+		d := map[string]interface{}{
+			"url": fmt.Sprintf("%s/%s", params.HTTP, url),
+		}
+		for k, v := range req {
+			d[k] = v[0]
+		}
+		return &Notify{
+			Method: NotifyMethodRecordStop,
+			Data:   d,
+		}
 	}
-	for k, v := range req {
-		d[k] = v[0]
-	}
-	return &Notify{
-		Method: NotifyMethodRecordStop,
-		Data:   d,
-	}
+
+	return &Notify{}
 }

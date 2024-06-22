@@ -15,7 +15,10 @@ import (
 type Streams struct {
 	db.DBModel
 	// 0  直播 1 历史
-	T int `json:"t" gorm:"column:t"`
+	T       int    `json:"t" gorm:"column:t"`
+	BaseURL string `json:"deviceid" gorm:"column:baseurl"`
+	// 端口
+	BasePort string `json:"deviceid" gorm:"column:baseport"`
 	// 设备ID
 	DeviceID string `json:"deviceid" gorm:"column:deviceid"`
 	// 通道ID
@@ -48,10 +51,12 @@ type Streams struct {
 	Stream bool `json:"stream" gorm:"column:stream"`
 
 	// ---
-	S, E time.Time     `json:"-" gorm:"-"`
-	ssrc string        // 国标ssrc 10进制字符串
-	Ext  int64         `json:"-" gorm:"-"` // 流等待过期时间
-	Resp *sip.Response `json:"-" gorm:"-"`
+	S, E    time.Time     `json:"-" gorm:"-"`
+	ssrc    string        // 国标ssrc 10进制字符串
+	Ext     int64         `json:"-" gorm:"-"` // 流等待过期时间
+	Resp    *sip.Response `json:"-" gorm:"-"`
+	Secret  string        `json:"-" gorm:"-"`
+	RESTFUL string        `json:"-" gorm:"-"`
 }
 
 // 当前系统中存在的流列表
@@ -188,4 +193,8 @@ func CheckStreams() {
 		}
 		skip += 100
 	}
+}
+
+func CheckEndPoints() {
+	GetStrategy(config.Strategy).HealthCheck()
 }

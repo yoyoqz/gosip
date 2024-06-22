@@ -2,9 +2,7 @@ package sipapi
 
 import (
 	"fmt"
-	"net"
 	"net/http"
-	"net/url"
 	"strconv"
 	"sync"
 
@@ -89,18 +87,6 @@ func LoadSYSInfo() {
 			Params:      sip.NewParams(),
 		},
 	}
-
-	// init media
-	url, err := url.Parse(config.Media.RTP)
-	if err != nil {
-		logrus.Fatalf("media rtp url error,url:%s,err:%v", config.Media.RTP, err)
-	}
-	ipaddr, err := net.ResolveIPAddr("ip", url.Hostname())
-	if err != nil {
-		logrus.Fatalf("media rtp url error,url:%s,err:%v", config.Media.RTP, err)
-	}
-	_sysinfo.MediaServerRtpIP = ipaddr.IP
-	_sysinfo.MediaServerRtpPort, _ = strconv.Atoi(url.Port())
 }
 
 // zlm接收到的ssrc为16进制。发起请求的ssrc为10进制

@@ -55,7 +55,7 @@ func (ri *apiRecordItem) Start() (string, interface{}) {
 		return m.StatusSysERR, errors.New("config record max time invalid.")
 	}
 
-	err := zlmStartRecord(ri.params)
+	err := zlmStartRecord(ri.id, ri.params)
 	if err != nil {
 		return m.StatusParamsERR, err
 	}
@@ -68,7 +68,7 @@ func (ri *apiRecordItem) Start() (string, interface{}) {
 			// 自动停止录制
 			ri.Stop()
 			url1 := <-ri.resp
-			notify(notifyRecordStop(url1, ri.req))
+			notify(notifyRecordStop(ri.id, url1, ri.req))
 		case <-ri.Clos:
 			// 调用stop接口
 		}
@@ -86,7 +86,7 @@ func (ri *apiRecordItem) Start() (string, interface{}) {
 	return m.StatusSucc, ri.id
 }
 func (ri *apiRecordItem) Stop() (string, interface{}) {
-	err := zlmStopRecord(ri.params)
+	err := zlmStopRecord(ri.id, ri.params)
 	if err != nil {
 		return m.StatusSysERR, ""
 	}

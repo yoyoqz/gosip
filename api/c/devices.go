@@ -190,10 +190,13 @@ func DevicesDelete(c *gin.Context) {
 func RecordStart(c *gin.Context) {
 	streamID := c.Param("id")
 
-	if _, ok := sipapi.StreamList.Response.Load(streamID); !ok {
+	d, ok := sipapi.StreamList.Response.Load(streamID)
+	if !ok {
 		m.JsonResponse(c, m.StatusParamsERR, "视频流不存在或已关闭")
 		return
 	}
+
+	params := d.(*sipapi.Streams)
 
 	if _, ok := sipapi.RecordList.Get(streamID); ok {
 		//sipapi.RecordList.Stop(req.Stream)
@@ -214,7 +217,7 @@ func RecordStart(c *gin.Context) {
 	//}
 
 	values := url.Values{}
-	values.Set("secret", m.MConfig.Media.Secret)
+	values.Set("secret", params.Secret)
 	values.Set("type", "1")
 	values.Set("vhost", "__defaultVhost__")
 	values.Set("app", "rtp")

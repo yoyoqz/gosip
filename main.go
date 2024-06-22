@@ -82,6 +82,7 @@ func _cron() {
 	//c.AddFunc("0 */60 * * * *", sipapi.CheckStreams) // 定时关闭推送流
 	//c.AddFunc("@every 1h30m"
 	c.AddFunc(fixTime, sipapi.CheckStreams)
+	c.AddFunc("@every 1m", sipapi.CheckEndPoints)
 	//c.AddFunc("0 */5 * * * *", sipapi.ClearFiles)    // 定时清理录制文件
 	c.Start()
 }

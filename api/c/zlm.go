@@ -155,10 +155,15 @@ func zlmRecordMp4(c *gin.Context) {
 		})
 		return
 	}
-	if item, ok := sipapi.RecordList.Get(req.Stream); ok {
-		sipapi.RecordList.Stop(req.Stream)
-		item.Down(req.URL)
-		item.Resp(fmt.Sprintf("%s/%s", m.MConfig.Media.HTTP, req.URL))
+	if d, ok := sipapi.StreamList.Response.Load(req.Stream); ok {
+		params := d.(*sipapi.Streams)
+
+		if item, ok := sipapi.RecordList.Get(req.Stream); ok {
+			sipapi.RecordList.Stop(req.Stream)
+			item.Down(req.URL)
+
+			item.Resp(fmt.Sprintf("%s/%s", params.RESTFUL, req.URL))
+		}
 	}
 	c.JSON(http.StatusOK, map[string]any{
 		"code": 0,
