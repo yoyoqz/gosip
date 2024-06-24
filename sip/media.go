@@ -61,8 +61,9 @@ func (r *RoundRobin) GetNext() *m.MediaServer {
 
 func (r *RoundRobin) HealthCheck() {
 	for i := range r.nodes {
-		//r.rn[i].server.HTTP
-		if CheckSiteStatus(r.nodes[i].server.HTTP) {
+		url := r.nodes[i].server.HTTP + "/index/api/version?secret=" + r.nodes[i].server.Secret
+
+		if CheckSiteStatus(url) {		
 			r.nodes[i].IsAlive = true
 		} else {
 			r.nodes[i].IsAlive = false
