@@ -86,7 +86,7 @@ func Play(c *gin.Context) {
 // @Failure     1001 {object} string
 // @Failure     1002 {object} string
 // @Failure     1003 {object} string
-// @Router      /channels/{id}/streams [post]
+// @Router      /channels/streams/more/:ids [post]
 func MultiPlay(c *gin.Context) {
 	channelIDs := c.Param("ids")
 

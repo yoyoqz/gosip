@@ -1,7 +1,7 @@
 REGISTRY:=docker.io
 GROUP:=panjjo
 PROJECT:=sipserver
-TAG:=1.0.6
+TAG:=1.1.0
 
 all: build docker push
 
@@ -12,7 +12,7 @@ docker:
 	docker image rm -f ${GROUP}/${PROJECT}:${TAG}
 	docker build -t ${GROUP}/${PROJECT}:${TAG} .
 
-push:
-	docker tag ${GROUP}/${PROJECT}:${TAG} ${REGISTRY}/${GROUP}/${PROJECT}:${TAG}
-	docker push ${REGISTRY}/${GROUP}/${PROJECT}:${TAG}
+#push:
+#	docker tag ${GROUP}/${PROJECT}:${TAG} ${REGISTRY}/${GROUP}/${PROJECT}:${TAG}
+#	docker push ${REGISTRY}/${GROUP}/${PROJECT}:${TAG}
 

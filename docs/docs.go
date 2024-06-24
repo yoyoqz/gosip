@@ -97,6 +97,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/channels/streams/more/:ids": {
+            "post": {
+                "description": "直播一个通道最多存在一个流，回放每请求一次生成一个流",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "streams"
+                ],
+                "summary": "多设备播放（直播/回放）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "通道id1,id2,id3",
+                        "name": "ids",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "是否是tcp",
+                        "name": "tcp",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "0": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/sipapi.Streams"
+                        }
+                    },
+                    "1000": {
+                        "description": "",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "1001": {
+                        "description": "",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "1002": {
+                        "description": "",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "1003": {
+                        "description": "",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/channels/{id}": {
             "post": {
                 "description": "调整通道信息",
@@ -318,7 +380,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "是否回放，1回放，0直播，默认0",
+                        "description": "是否回放，1回放，0直播，默认0，2下载",
                         "name": "replay",
                         "in": "formData"
                     },
@@ -332,6 +394,12 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "回放结束时间，时间戳，replay=1时必传",
                         "name": "end",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "是否是tcp",
+                        "name": "tcp",
                         "in": "formData"
                     }
                 ],
@@ -1195,7 +1263,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "streamtype": {
-                    "description": "pull 媒体服务器主动拉流，push 监控设备主动推流",
+                    "description": "pull 媒体服务器主动拉流，push 监控设备主动推流fmp4",
                     "type": "string"
                 },
                 "t": {
@@ -1229,6 +1297,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "GB28181 SIP服务端.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {
