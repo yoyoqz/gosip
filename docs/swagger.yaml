@@ -473,7 +473,7 @@ paths:
         name: id
         required: true
         type: string
-      - description: 是否回放，1回放，0直播，默认0，2下载
+      - description: 是否回放，1回放，0直播，默认0，下载2
         in: formData
         name: replay
         type: integer
@@ -485,7 +485,7 @@ paths:
         in: formData
         name: end
         type: integer
-      - description: 是否是tcp
+      - description: 是否是tcp,0是udp,1是tcp,默认tcp
         in: formData
         name: tcp
         type: string
@@ -515,18 +515,18 @@ paths:
       summary: 监控播放（直播/回放）
       tags:
       - streams
-  /channels/streams/more/:ids:
+  /channels/streams/more/{ids}:
     post:
       consumes:
       - application/x-www-form-urlencoded
       description: 直播一个通道最多存在一个流，回放每请求一次生成一个流
       parameters:
-      - description: 通道id1,id2,id3
+      - description: 通道, 传入参数 id1,id2,id3等，参数分别用逗号隔开
         in: path
         name: ids
         required: true
         type: string
-      - description: 是否是tcp
+      - description: 是否是tcp,0是udp,1是tcp,默认tcp
         in: formData
         name: tcp
         type: string

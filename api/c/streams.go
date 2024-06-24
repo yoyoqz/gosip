@@ -18,10 +18,10 @@ import (
 // @Accept      x-www-form-urlencoded
 // @Produce     json
 // @Param       id     path     string true  "通道id"
-// @Param       replay formData int    false "是否回放，1回放，0直播，默认0，2下载"
+// @Param       replay formData int    false "是否回放，1回放，0直播，默认0，下载2"
 // @Param       start  formData int    false "回放开始时间，时间戳，replay=1时必传"
 // @Param       end    formData int    false "回放结束时间，时间戳，replay=1时必传"
-// @Param       tcp    formData string false "是否是tcp"
+// @Param       tcp    formData string 1 "是否是tcp,0是udp,1是tcp,默认tcp"
 // @Success     0      {object} sipapi.Streams
 // @Failure     1000 {object} string
 // @Failure     1001 {object} string
@@ -79,14 +79,14 @@ func Play(c *gin.Context) {
 // @Tags        streams
 // @Accept      x-www-form-urlencoded
 // @Produce     json
-// @Param       ids    path     string true  "通道id1,id2,id3"
-// @Param       tcp    formData string false "是否是tcp"
+// @Param       ids    path     string true  "通道, 传入参数 id1,id2,id3等，参数分别用逗号隔开"
+// @Param       tcp    formData string 1 "是否是tcp,0是udp,1是tcp,默认tcp"
 // @Success     0      {object} sipapi.Streams
 // @Failure     1000 {object} string
 // @Failure     1001 {object} string
 // @Failure     1002 {object} string
 // @Failure     1003 {object} string
-// @Router      /channels/streams/more/:ids [post]
+// @Router      /channels/streams/more/{ids} [post]
 func MultiPlay(c *gin.Context) {
 	channelIDs := c.Param("ids")
 

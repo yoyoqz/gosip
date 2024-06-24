@@ -91,7 +91,7 @@
                 }
             }
         },
-        "/channels/streams/more/:ids": {
+        "/channels/streams/more/{ids}": {
             "post": {
                 "description": "直播一个通道最多存在一个流，回放每请求一次生成一个流",
                 "consumes": [
@@ -107,14 +107,14 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "通道id1,id2,id3",
+                        "description": "通道, 传入参数 id1,id2,id3等，参数分别用逗号隔开",
                         "name": "ids",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "是否是tcp",
+                        "description": "是否是tcp,0是udp,1是tcp,默认tcp",
                         "name": "tcp",
                         "in": "formData"
                     }
@@ -374,7 +374,7 @@
                     },
                     {
                         "type": "integer",
-                        "description": "是否回放，1回放，0直播，默认0，2下载",
+                        "description": "是否回放，1回放，0直播，默认0，下载2",
                         "name": "replay",
                         "in": "formData"
                     },
@@ -392,7 +392,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "是否是tcp",
+                        "description": "是否是tcp,0是udp,1是tcp,默认tcp",
                         "name": "tcp",
                         "in": "formData"
                     }
